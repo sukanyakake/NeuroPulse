@@ -1,0 +1,84 @@
+### =========================
+### 🌐 BASE URL
+### =========================
+@baseUrl = http://127.0.0.1:5000/api
+
+### =========================
+### 🔐 1. SIGNUP
+### =========================
+### Test API
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@gmail.com",
+  "password": "123456"
+}
+
+### =========================
+### 🔐 2. LOGIN (COPY TOKEN)
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "sukanya_kake@gmail.com",
+  "password": "1"
+}
+
+### =========================
+### 🔑 SET TOKEN HERE AFTER LOGIN
+### =========================
+@token = YOUR_TOKEN_HERE
+
+### =========================
+### 🔥 3. SYNC DATA
+### =========================
+POST {{baseUrl}}/datasources/sync
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "signals": {
+    "screen_time": 5,
+    "unlocks": 80,
+    "steps": 5100,
+    "sleep": 7
+  }
+}
+
+### =========================
+### 📜 4. RAW LOGS
+### =========================
+GET {{baseUrl}}/datasources/raw_logs
+Authorization: Bearer {{token}}
+
+### =========================
+### 📊 5. SYNC SUMMARY
+### =========================
+GET {{baseUrl}}/datasources/summary
+Authorization: Bearer {{token}}
+
+### =========================
+### 📊 6. DASHBOARD
+### =========================
+GET {{baseUrl}}/dashboard/summary
+Authorization: Bearer {{token}}
+
+### =========================
+### 📈 7. BEHAVIOUR
+### =========================
+GET {{baseUrl}}/behaviour/stats
+Authorization: Bearer {{token}}
+
+### =========================
+### 🤖 8. PREDICTION
+### =========================
+GET {{baseUrl}}/prediction/forecast
+Authorization: Bearer {{token}}
+
+### =========================
+### ✨ 9. ACTION CENTER
+### =========================
+GET {{baseUrl}}/action/plan
+Authorization: Bearer {{token}}

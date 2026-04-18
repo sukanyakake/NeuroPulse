@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    /* Recreating the exact radial gradient from your HTML */
+    background: radial-gradient(circle at 20% 10%, #020617, #020617 40%, #000);
+    @apply text-white min-h-screen font-sans m-0 overflow-x-hidden;
+  }
+}
+
+@layer components {
+  /* High-fidelity glass effect */
+  .glass {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Logo gradient text */
+  .logo-text {
+    @apply font-black italic text-[30px];
+    background: linear-gradient(90deg, #22d3ee, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Hover effect for cards */
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+  .card-hover:hover {
+    @apply -translate-y-1;
+    border-color: rgba(34, 211, 238, 0.2);
+  }
+}
