@@ -59,18 +59,6 @@ dist/
 .vite/
 
 # =========================
-# 🔥 ANDROID
-# =========================
-.gradle/
-local.properties
-*.apk
-*.ap_
-*.dex
-captures/
-.externalNativeBuild/
-.cxx/
-
-# =========================
 # 🔥 SYSTEM FILES
 # =========================
 .DS_Store
@@ -107,6 +95,6 @@ htmlcov/
 # 🔥 GIT
 # =========================
 *.orig*.zip
-mobile_collector
-mobile_collector/
-mobile_collector/
+docs/
+docs
+.http
