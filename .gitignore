@@ -95,8 +95,7 @@ htmlcov/
 # 🔥 GIT
 # =========================
 *.orig*.zip
-docs/
-docs
-.http
 
+.http
+pic/
 backend/data/mental_health_lstm_dataset_6000.csv
