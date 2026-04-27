@@ -9,7 +9,6 @@ const DataSources = () => {
   const [telemetryLogs, setTelemetryLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastSyncTime, setLastSyncTime] = useState(null);
-
   const [showModal, setShowModal] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -47,24 +46,22 @@ const DataSources = () => {
   }, [isSyncing]);
 
   // =========================
-  // TODAY LOGIC
+  // ✅ LATEST LOG FIX
   // =========================
-  const today = new Date().toLocaleDateString("en-CA");
+  const latestLog = [...telemetryLogs].sort(
+    (a, b) => new Date(b.sync_at) - new Date(a.sync_at),
+  )[0];
 
-  const todayData = telemetryLogs
-    .filter((log) => log.date === today)
-    .sort((a, b) => new Date(b.sync_at) - new Date(a.sync_at))[0];
+  const hasData = telemetryLogs.length > 0;
 
-  const latest = todayData
-    ? todayData
-    : {
-        metrics: {
-          screen_time: 0,
-          steps: 0,
-          sleep: 0,
-          unlocks: 0,
-        },
-      };
+  const latest = {
+    metrics: {
+      screen_time: latestLog?.metrics?.screen_time ?? 0,
+      steps: latestLog?.metrics?.steps ?? 0,
+      sleep: latestLog?.metrics?.sleep ?? 0,
+      unlocks: latestLog?.metrics?.unlocks ?? 0,
+    },
+  };
 
   if (loading) {
     return (
@@ -78,8 +75,7 @@ const DataSources = () => {
 
   return (
     <div className="animate-fade-in px-2 md:px-0">
-
-      {/* HEADER - Updated for stacking on Mobile */}
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8 md:mb-12">
         <div>
           <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase text-white">
@@ -96,14 +92,13 @@ const DataSources = () => {
             </p>
           )}
 
-          {!todayData && (
+          {!hasData && (
             <p className="text-xs text-yellow-400 mt-2">
-              No data synced today. Please add data.
+              No data synced yet. Please add data.
             </p>
           )}
         </div>
 
-        {/* RIGHT SIDE - Sync status and Button */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
           <button
             onClick={() => setShowModal(true)}
@@ -125,12 +120,24 @@ const DataSources = () => {
         </div>
       </div>
 
-      {/* METRICS - Grid updated: 1 col on mobile, 2 on tablet, 4 on desktop */}
+      {/* METRICS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-10 md:mb-14">
-        <MetricCard title="Unlock Events" value={latest.metrics.unlocks} icon="📱" />
-        <MetricCard title="Active Usage" value={`${latest.metrics.screen_time}h`} icon="⌛" />
+        <MetricCard
+          title="Unlock Events"
+          value={latest.metrics.unlocks}
+          icon="📱"
+        />
+        <MetricCard
+          title="Active Usage"
+          value={`${latest.metrics.screen_time}h`}
+          icon="⌛"
+        />
         <MetricCard title="Step Count" value={latest.metrics.steps} icon="👟" />
-        <MetricCard title="Sleep Status" value={`${latest.metrics.sleep}h`} icon="🌙" />
+        <MetricCard
+          title="Sleep Status"
+          value={`${latest.metrics.sleep}h`}
+          icon="🌙"
+        />
       </div>
 
       {/* MOOD */}
@@ -160,7 +167,7 @@ const DataSources = () => {
                   <th className="pb-4 text-right">User</th>
                 </tr>
               </thead>
-              <tbody className="text-sm md:text-base">
+              <tbody>
                 {telemetryLogs.map((log, i) => (
                   <tr key={i} className="border-b border-white/5">
                     <td className="py-4 text-cyan-400">{log.date}</td>
@@ -178,81 +185,82 @@ const DataSources = () => {
         )}
       </div>
 
-      {/* MODAL - Updated width for mobile screens */}
+      {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="bg-slate-900 border border-white/10 p-6 md:p-8 rounded-2xl w-full max-w-[400px] shadow-2xl">
-
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
+          <div className="bg-slate-900 p-6 rounded-2xl w-full max-w-[400px]">
             <h2 className="text-xl font-bold text-cyan-400 mb-6 text-center">
               Enter Telemetry Data
             </h2>
 
             <div className="space-y-3">
+              {["screen_time", "sleep", "steps", "unlocks"].map((field) => (
                 <input
-                type="number"
-                placeholder="Screen Time"
-                className="w-full p-3 rounded bg-slate-800 text-white border border-white/5 focus:border-cyan-500 outline-none"
-                onChange={(e) =>
-                    setFormData({ ...formData, screen_time: e.target.value })
-                }
+                  key={field}
+                  type="number"
+                  placeholder={field}
+                  className="w-full p-3 rounded bg-slate-800 text-white"
+                  value={formData[field]}
+                  onChange={(e) =>
+                    setFormData({ ...formData, [field]: e.target.value })
+                  }
                 />
-
-                <input
-                type="number"
-                placeholder="Sleep"
-                className="w-full p-3 rounded bg-slate-800 text-white border border-white/5 focus:border-cyan-500 outline-none"
-                onChange={(e) =>
-                    setFormData({ ...formData, sleep: e.target.value })
-                }
-                />
-
-                <input
-                type="number"
-                placeholder="Steps"
-                className="w-full p-3 rounded bg-slate-800 text-white border border-white/5 focus:border-cyan-500 outline-none"
-                onChange={(e) =>
-                    setFormData({ ...formData, steps: e.target.value })
-                }
-                />
-
-                <input
-                type="number"
-                placeholder="Unlocks"
-                className="w-full p-3 rounded bg-slate-800 text-white border border-white/5 focus:border-cyan-500 outline-none"
-                onChange={(e) =>
-                    setFormData({ ...formData, unlocks: e.target.value })
-                }
-                />
+              ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 mt-6">
+            <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 rounded transition-all"
+                className="w-full bg-slate-700 text-white py-2 rounded"
               >
                 Cancel
               </button>
 
               <button
                 onClick={async () => {
-                  await api.syncData({
-                    signals: {
-                      screen_time: Number(formData.screen_time),
-                      sleep: Number(formData.sleep),
-                      steps: Number(formData.steps),
-                      unlocks: Number(formData.unlocks),
-                    },
+                  const screen = Number(formData.screen_time);
+                  const sleep = Number(formData.sleep);
+                  const steps = Number(formData.steps);
+                  const unlocks = Number(formData.unlocks);
+
+                  if (
+                    formData.screen_time === "" ||
+                    formData.sleep === "" ||
+                    formData.steps === "" ||
+                    formData.unlocks === ""
+                  ) {
+                    alert("Please fill all fields");
+                    return;
+                  }
+
+                  if (screen < 0 || screen > 24) return alert("Screen 0–24");
+                  if (sleep < 0 || sleep > 12) return alert("Sleep 0–12");
+                  if (steps < 0 || steps > 30000) return alert("Steps 0–30000");
+                  if (unlocks < 0 || unlocks > 300)
+                    return alert("Unlocks 0–300");
+                  if (screen + sleep > 24) return alert("Invalid total hours");
+
+                  const res = await api.syncData({
+                    signals: { screen_time: screen, sleep, steps, unlocks },
                   });
 
+                  if (res.error) return alert(res.error);
+
                   setShowModal(false);
-                  fetchLogs();
+                  setFormData({
+                    screen_time: "",
+                    sleep: "",
+                    steps: "",
+                    unlocks: "",
+                  });
+
+                  await fetchLogs();
                 }}
-                className="w-full bg-cyan-500 hover:bg-cyan-400 text-black py-2 rounded font-bold transition-all"
+                className="w-full bg-cyan-500 text-black py-2 rounded font-bold"
               >
                 Sync 🚀
               </button>
             </div>
-
           </div>
         </div>
       )}

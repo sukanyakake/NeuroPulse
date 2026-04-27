@@ -127,7 +127,7 @@ const RiskPrediction = () => {
       {/* --- TOP SECTION: GAUGE & DRIVERS --- */}
       <div className="grid lg:grid-cols-3 gap-8 mb-12">
         {/* Dynamic Risk Gauge */}
-                <RiskGauge risk={risk} />
+        <RiskGauge risk={risk} />
 
         {/* Real-time Drivers */}
         <div className="lg:col-span-2 glass p-10 rounded-[3rem] border-l-8 border-indigo-500 relative bg-[#0a0f1e]/40">

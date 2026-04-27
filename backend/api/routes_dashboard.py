@@ -10,69 +10,90 @@ dashboard_bp = Blueprint('dashboard', __name__)
 
 # =========================
 # 📅 GET TODAY DATE
-# =========================
+# =========================     
 def get_today():
     return datetime.now().strftime("%Y-%m-%d")
 
 
 # =========================
 # 📊 DASHBOARD SUMMARY
-# =========================
 @dashboard_bp.route('/summary', methods=['GET'])
 def get_dashboard_summary():
     try:
-        # =========================
-        # 🔐 GET USER FROM TOKEN
-        # =========================
         user_id = get_user_from_token()
-
         if not user_id:
             return jsonify({"error": "Unauthorized"}), 401
 
         today = get_today()
 
         # =========================
-        # 📊 TELEMETRY (LATEST TODAY)
+        # 📊 TELEMETRY
         # =========================
         telemetry = telemetry_col.find_one(
             {"user_id": user_id, "date": today},
             sort=[("sync_at", -1)]
         )
 
-        # =========================
-        # 🚨 NO DATA CASE
-        # =========================
         if not telemetry:
             return jsonify({
                 "status": "No Data",
                 "risk_score": 0,
                 "forecast_72h": [],
                 "reason": "No telemetry data for today",
-                "signals": {
-                    "screen_time": 0,
-                    "sleep": 0,
-                    "steps": 0,
-                    "unlocks": 0
-                },
+                "signals": {},
                 "mood_score": 3,
                 "advice": []
             }), 200
 
         # =========================
-        # 🤖 PREDICTION
+        # 🤖 PREDICTION (FIX HERE)
         # =========================
-        prediction = prediction_col.find_one(
-            {"user_id": user_id, "date": today},
-            sort=[("updated_at", -1)]
-        )
+        prediction = prediction_col.find_one({
+            "user_id": user_id,
+            "date": today
+        })
+
+        # 🔥 IF MISSING → GENERATE
+        if not prediction:
+            from models.predictor import run_prediction
+
+            print("🔥 No prediction → generating...")
+
+            try:
+                result = run_prediction(user_id)
+            except Exception as e:
+                print("Prediction error:", e)
+                result = {
+                    "risk_score": 0,
+                    "status": "No Data",
+                    "forecast_72h": [],
+                    "reason": "Prediction failed"
+                }
+
+            prediction = {
+                "user_id": user_id,
+                "date": today,
+                "risk_score": result.get("risk_score", 0),
+                "status": result.get("status", "No Data"),
+                "forecast_72h": result.get("forecast_72h", []),
+                "reason": result.get("reason", ""),
+                "updated_at": datetime.now()
+            }
+
+            # ✅ SAVE BACK
+            prediction_col.update_one(
+                {"user_id": user_id, "date": today},
+                {"$set": prediction},
+                upsert=True
+            )
 
         # =========================
         # 🙂 MOOD
         # =========================
-        mood = mood_col.find_one(
-            {"user_id": user_id, "date": today},
-            sort=[("sync_at", -1)]
-        )
+        mood = mood_col.find_one({
+            "user_id": user_id,
+            "date": today
+        })
 
         # =========================
         # ✨ ACTION CENTER
@@ -80,17 +101,18 @@ def get_dashboard_summary():
         action_data = ActionCenterService.get_recommendations(user_id)
 
         # =========================
-        # ✅ FINAL RESPONSE
+        # ✅ RESPONSE
         # =========================
         return jsonify({
-            "status": prediction["status"] if prediction else "No Data",
-            "risk_score": float(prediction["risk_score"]) if prediction else 0,
-            "forecast_72h": prediction["forecast_72h"] if prediction else [],
-            "reason": prediction.get("reason") if prediction else "",
+            "status": prediction.get("status", "No Data"),
+            "risk_score": float(prediction.get("risk_score", 0)),
+            "forecast_72h": prediction.get("forecast_72h", []),
+            "reason": prediction.get("reason", ""),
             "signals": telemetry.get("metrics", {}),
             "mood_score": mood.get("mood_score", 3) if mood else 3,
             "advice": [step["title"] for step in action_data.get("steps", [])]
         }), 200
 
     except Exception as e:
+        print("❌ DASHBOARD ERROR:", e)
         return jsonify({"error": str(e)}), 500

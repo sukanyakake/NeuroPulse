@@ -8,8 +8,19 @@ const getAuthHeaders = () => {
 
   return {
     "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
+    ...(token && { Authorization: `Bearer ${token}` }), // ✅ safer
   };
+};
+
+// =========================
+// 🔥 COMMON FETCH HANDLER
+// =========================
+const handleResponse = async (res) => {
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.error || "API Error");
+  }
+  return res.json();
 };
 
 export const api = {
@@ -18,10 +29,9 @@ export const api = {
   // =========================
   getDashboard: async () => {
     const res = await fetch(`${BASE_URL}/dashboard/summary`, {
-      headers: getAuthHeaders(), // ✅ FIX
+      headers: getAuthHeaders(),
     });
-
-    return res.json();
+    return handleResponse(res);
   },
 
   // =========================
@@ -31,8 +41,7 @@ export const api = {
     const res = await fetch(`${BASE_URL}/behaviour/stats`, {
       headers: getAuthHeaders(),
     });
-
-    return res.json();
+    return handleResponse(res);
   },
 
   // =========================
@@ -42,8 +51,7 @@ export const api = {
     const res = await fetch(`${BASE_URL}/prediction/forecast`, {
       headers: getAuthHeaders(),
     });
-
-    return res.json();
+    return handleResponse(res);
   },
 
   // =========================
@@ -53,8 +61,7 @@ export const api = {
     const res = await fetch(`${BASE_URL}/action/plan`, {
       headers: getAuthHeaders(),
     });
-
-    return res.json();
+    return handleResponse(res);
   },
 
   // =========================
@@ -65,10 +72,9 @@ export const api = {
       `${BASE_URL}/datasources/raw_logs?ts=${Date.now()}`,
       {
         headers: getAuthHeaders(),
-      }
+      },
     );
-
-    return res.json();
+    return handleResponse(res);
   },
 
   // =========================
@@ -76,10 +82,9 @@ export const api = {
   // =========================
   getSyncSummary: async () => {
     const res = await fetch(`${BASE_URL}/datasources/summary`, {
-      headers: getAuthHeaders(), // ✅ FIX
+      headers: getAuthHeaders(),
     });
-
-    return res.json();
+    return handleResponse(res);
   },
 
   // =========================
@@ -88,11 +93,10 @@ export const api = {
   syncData: async (payload) => {
     const res = await fetch(`${BASE_URL}/datasources/sync`, {
       method: "POST",
-      headers: getAuthHeaders(), // ✅ FIX
+      headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
-
-    return res.json();
+    return handleResponse(res);
   },
 
   // =========================
@@ -107,7 +111,7 @@ export const api = {
       body: JSON.stringify(data),
     });
 
-    const result = await res.json();
+    const result = await handleResponse(res);
 
     // ✅ STORE TOKEN
     if (result.token) {
@@ -126,6 +130,13 @@ export const api = {
       body: JSON.stringify(data),
     });
 
-    return res.json();
+    return handleResponse(res);
+  },
+
+  // =========================
+  // 🔓 LOGOUT (ADDED)
+  // =========================
+  logout: () => {
+    localStorage.removeItem("token");
   },
 };

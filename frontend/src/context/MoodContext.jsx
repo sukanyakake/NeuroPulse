@@ -9,14 +9,14 @@ export const MoodProvider = ({ children }) => {
   const [lastSyncData, setLastSyncData] = useState(null);
 
   // =========================
-  // 🔥 RESTORE MOOD (ONLY IF TOKEN EXISTS)
+  // 🔥 RESTORE MOOD (SAFE)
   // =========================
   useEffect(() => {
     const restoreMood = async () => {
       try {
         const token = localStorage.getItem("token");
 
-        // ❌ DON'T CALL API WITHOUT TOKEN
+        // ❌ Don't call API without login
         if (!token) {
           setMood(3);
           return;
@@ -40,39 +40,32 @@ export const MoodProvider = ({ children }) => {
   }, []);
 
   // =========================
-  // 🔥 SYNC DATA (FIXED)
+  // 🔥 SYNC MOOD ONLY (FIXED)
   // =========================
-const triggerSync = async (selectedMood) => {
-  setIsSyncing(true);
+  const triggerSync = async (selectedMood) => {
+    setIsSyncing(true);
 
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    if (!token) {
-      alert("Please login first");
-      return;
+      if (!token) {
+        alert("Please login first");
+        return;
+      }
+
+      // ✅ ONLY SEND MOOD (NO TELEMETRY HERE)
+      const response = await api.syncData({
+        mood_score: selectedMood,
+      });
+
+      setLastSyncData(response);
+      setMood(selectedMood);
+    } catch (err) {
+      console.error("Sync Error:", err);
+    } finally {
+      setIsSyncing(false);
     }
-
-    // ✅ SEND mood_score ALSO
-    const response = await api.syncData({
-      signals: {
-        screen_time: 5,
-        unlocks: 80,
-        steps: 5000,
-        sleep: 7,
-      },
-      mood_score: selectedMood   // ⭐ THIS WAS MISSING
-    });
-
-    setLastSyncData(response);
-    setMood(selectedMood);
-
-  } catch (err) {
-    console.error("Sync Error:", err);
-  } finally {
-    setIsSyncing(false);
-  }
-};
+  };
 
   return (
     <MoodContext.Provider

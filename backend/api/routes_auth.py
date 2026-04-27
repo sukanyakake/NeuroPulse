@@ -1,10 +1,10 @@
 from flask import Blueprint, request, jsonify
 from database.db_connection import users_col
-from datetime import datetime, timedelta  # ✅ FIX IMPORT
-
+from datetime import datetime, timedelta
 import hashlib
 import uuid
 import jwt
+import re
 from dotenv import load_dotenv
 import os
 
@@ -13,6 +13,13 @@ load_dotenv()
 SECRET_KEY = "neuropulse"
 
 auth_bp = Blueprint('auth', __name__)
+
+
+# =========================
+# 🔐 HELPER: VALIDATE EMAIL
+# =========================
+def is_valid_email(email):
+    return re.match(r"[^@]+@[^@]+\.[^@]+", email)
 
 
 # =========================
@@ -26,33 +33,39 @@ def signup():
         if not data:
             return jsonify({"error": "No data provided"}), 400
 
-        email = data.get("email")
-        password = data.get("password")
+        email = data.get("email", "").lower().strip()
+        password = data.get("password", "")
 
-        if not email or not password:
-            return jsonify({"error": "Missing fields"}), 400
+        # ✅ VALIDATION
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
 
-        # ✅ normalize email
-        email = email.lower().strip()
+        if not is_valid_email(email):
+            return jsonify({"error": "Invalid email format"}), 400
 
-        # ✅ check existing user
+        if not password:
+            return jsonify({"error": "Password is required"}), 400
+
+        if len(password) < 6:
+            return jsonify({"error": "Password must be at least 6 characters"}), 400
+
+        # ✅ CHECK EXISTING USER
         if users_col.find_one({"email": email}):
             return jsonify({"error": "User already exists"}), 400
 
-        # ✅ hash password
+        # ✅ HASH PASSWORD
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-        # ✅ generate unique user_id
+        # ✅ GENERATE USER ID
         user_id = str(uuid.uuid4())[:8]
 
-        user = {
+        # ✅ STORE USER
+        users_col.insert_one({
             "user_id": user_id,
             "email": email,
             "password": hashed_password,
             "created_at": datetime.now()
-        }
-
-        users_col.insert_one(user)
+        })
 
         return jsonify({
             "message": "Signup successful",
@@ -60,32 +73,47 @@ def signup():
         }), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
+        print("SIGNUP ERROR:", str(e))
+        return jsonify({"error": "Internal server error"}), 500
+
 
 # =========================
-# 🔐 LOGIN (JWT)
-# =========================@auth_bp.route('/login', methods=['POST'])
-
+# 🔐 LOGIN
+# =========================
 @auth_bp.route('/login', methods=['POST'])
 def login():
     try:
         data = request.json
 
-        email = data.get("email").lower().strip()
-        password = data.get("password")
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
 
+        email = data.get("email", "").lower().strip()
+        password = data.get("password", "")
+
+        # ✅ VALIDATION
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
+
+        if not is_valid_email(email):
+            return jsonify({"error": "Invalid email format"}), 400
+
+        if not password:
+            return jsonify({"error": "Password is required"}), 400
+
+        # ✅ HASH PASSWORD
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
+        # ✅ FIND USER
         user = users_col.find_one({
             "email": email,
             "password": hashed_password
         })
 
         if not user:
-            return jsonify({"error": "Invalid credentials"}), 401
+            return jsonify({"error": "Invalid email or password"}), 401
 
-        # 🔐 FIXED JWT
+        # ✅ GENERATE JWT TOKEN
         token = jwt.encode({
             "user_id": user["user_id"],
             "exp": datetime.utcnow() + timedelta(hours=24)
@@ -98,4 +126,4 @@ def login():
 
     except Exception as e:
         print("LOGIN ERROR:", str(e))
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Internal server error"}), 500

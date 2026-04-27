@@ -24,13 +24,13 @@ const Dashboard = () => {
   const signals = data.signals || {};
 
   // =========================
-  // 🚨 NO DATA CHECK
+  // ✅ FIXED NO DATA LOGIC
   // =========================
-  const noData = data.status === "No Data" || data.risk_score === 0;
+  const noData = !data || !signals || Object.keys(signals).length === 0;
 
   return (
     <div className="animate-fade-in max-w-full">
-      {/* HEADER - Updated to stack on small screens */}
+      {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-8 md:mb-12">
         <div>
           <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase">
@@ -63,12 +63,13 @@ const Dashboard = () => {
       ) : (
         <>
           {/* =========================
-              METRICS - Changed to stack on mobile (1 col), tablet (3 col), desktop (5 col)
+              METRICS
           ========================= */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 mb-8 md:mb-12">
+            {/* ✅ SHOW RISK EVEN IF 0 */}
             <MetricCard
               title="Risk"
-              value={`${data.risk_score}%`}
+              value={`${data.risk_score ?? 0}%`}
               icon="⚠"
               colorClass="text-rose-400"
             />
@@ -96,20 +97,29 @@ const Dashboard = () => {
           </div>
 
           {/* =========================
-              GRAPH - Ensure overflow safety
+              GRAPH
           ========================= */}
-          <GlassCard title="Risk Forecast (72h)" icon="📊" className="mb-8 md:mb-12 overflow-hidden">
+          <GlassCard
+            title="Risk Trend"
+            icon="📊"
+            className="mb-8 md:mb-12 overflow-hidden"
+          >
             <div className="w-full overflow-x-auto">
-                {data.forecast_72h?.length ? (
-                <TrendChart data={data.forecast_72h} current={data.risk_score} />
-                ) : (
-                <p className="text-gray-400 py-10 text-center">No forecast available</p>
-                )}
+              {data.forecast_72h?.length ? (
+                <TrendChart
+                  data={data.forecast_72h}
+                  current={data.risk_score}
+                />
+              ) : (
+                <p className="text-gray-400 py-10 text-center">
+                  No forecast available
+                </p>
+              )}
             </div>
           </GlassCard>
 
           {/* =========================
-              INSIGHT + ADVICE - Changed to stack on mobile
+              INSIGHTS
           ========================= */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10">
             {/* AI SUMMARY */}
@@ -120,7 +130,7 @@ const Dashboard = () => {
               <p className="text-slate-300 text-base md:text-lg leading-relaxed">
                 Your current risk score is{" "}
                 <span className="text-cyan-400 font-bold">
-                  {data.risk_score}%
+                  {data.risk_score ?? 0}%
                 </span>
                 . {data.reason || "No insights available"}
               </p>
@@ -141,7 +151,9 @@ const Dashboard = () => {
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-400 text-center">No recommendations available</p>
+                <p className="text-gray-400 text-center">
+                  No recommendations available
+                </p>
               )}
             </GlassCard>
           </div>

@@ -1,32 +1,23 @@
 import numpy as np
 import random
-from datetime import datetime
 
 from models.model_loader import model, scaler
 from database.db_connection import telemetry_col, mood_col
 
 
 # =========================
-# 🔥 FETCH LAST 7 DAYS
+# 🔥 FETCH LAST AVAILABLE DAYS (MAX 7)
 # =========================
-def get_last_7_days(user_id):
+def get_last_days(user_id):
     data = list(
         telemetry_col.find({"user_id": user_id})
         .sort([("date", -1), ("sync_at", -1)])
         .limit(7)
     )
 
-    if len(data) == 0:
-        return [{
-            "screen_time": 2,
-            "sleep": 7,
-            "steps": 5000,
-            "unlocks": 50,
-            "mood": 3
-        }] * 7
-
-    while len(data) < 7:
-        data.append(data[-1])
+    if not data:
+        print("⚠️ No telemetry data found")
+        return []
 
     data.reverse()
 
@@ -70,21 +61,23 @@ def build_features(day):
 
     return [
         screen, sleep, steps, unlocks, mood,
-        sleep_deficit, activity_score, screen_intensity,
-        mood_inversion, weekday_flag, late_night_flag
+        sleep_deficit, activity_score,
+        screen_intensity, mood_inversion,
+        weekday_flag, late_night_flag
     ]
 
 
 # =========================
-# 🔥 RULE-BASED RISK
+# 🔥 RULE BASED RISK
 # =========================
 def calculate_rule_risk(day):
-    return max(0, min(100,
+    score = (
         day["screen_time"] * 4 +
-        (8 - day["sleep"]) * 10 +
-        (10000 - day["steps"]) / 400 +
+        max(0, (8 - day["sleep"])) * 10 +
+        max(0, (10000 - day["steps"]) / 400) +
         (5 - day["mood"]) * 15
-    ))
+    )
+    return max(0, min(100, score))
 
 
 # =========================
@@ -106,9 +99,20 @@ def generate_reason(day):
 
 
 # =========================
-# 🔥 BUILD SEQUENCE
+# 🔥 BUILD SEQUENCE (FIXED)
 # =========================
 def build_sequence(days):
+
+    # ✅ FIXED PADDING (front padding, not duplicate)
+    while len(days) < 7:
+        days.insert(0, {
+            "screen_time": 0,
+            "sleep": 7,
+            "steps": 3000,
+            "unlocks": 30,
+            "mood": 3
+        })
+
     seq = np.array([build_features(d) for d in days])
 
     if scaler is None:
@@ -131,14 +135,14 @@ def get_status(risk):
 
 
 # =========================
-# 🔥 MAIN PREDICTION (FINAL)
+# 🔥 MAIN PREDICTION
 # =========================
 def run_prediction(user_id):
 
     try:
-        # 🔥 FALLBACK
         print("MODEL:", model)
         print("SCALER:", scaler)
+
         if model is None or scaler is None:
             return {
                 "risk_score": 50,
@@ -147,20 +151,42 @@ def run_prediction(user_id):
                 "reason": "Model unavailable"
             }
 
-        days = get_last_7_days(user_id)
+        days = get_last_days(user_id)
+
+        if not days:
+            return {
+                "risk_score": 0,
+                "status": "No Data",
+                "forecast_72h": [],
+                "reason": "No telemetry data"
+            }
+
         seq = build_sequence(days)
 
-        # 🤖 LSTM
+        # 🤖 LSTM prediction
         lstm_risk = float(model.predict(seq, verbose=0)[0][0])
 
-        # 📊 RULE
-        latest_day = days[-1]
+        # ✅ FIX: USE REAL LAST DAY
+        latest_day = next(
+            (d for d in reversed(days) if d["screen_time"] > 0 or d["steps"] > 0),
+            days[-1]
+        )
+
         rule_risk = calculate_rule_risk(latest_day)
 
-        # 🔥 HYBRID
-        risk = round(0.5 * lstm_risk + 0.5 * rule_risk, 2)
+        # ✅ FIX: BETTER WEIGHTING
+        risk =rule_risk
 
-        # 🔮 FORECAST
+        # 🔍 DEBUG
+        print("USER:", user_id)
+        print("LSTM:", lstm_risk)
+        print("RULE:", rule_risk)
+        print("FINAL:", risk)
+        print("LATEST DAY:", latest_day)
+
+        # =========================
+        # 🔮 FORECAST (STABLE)
+        # =========================
         forecast = []
         temp_seq = seq.copy()
 
@@ -168,10 +194,11 @@ def run_prediction(user_id):
             next_lstm = float(model.predict(temp_seq, verbose=0)[0][0])
 
             new_scaled = temp_seq[0][-1].copy()
-            new_scaled[0] *= random.uniform(1.01, 1.08)
-            new_scaled[1] *= random.uniform(0.92, 0.98)
 
-            new_scaled = np.clip(new_scaled, 0, 1)
+            # ✅ deterministic change (no randomness)
+            new_scaled[0] = min(1, new_scaled[0] * 1.02)  # screen ↑
+            new_scaled[1] = max(0, new_scaled[1] * 0.98)  # sleep ↓
+
             real = scaler.inverse_transform([new_scaled])[0]
 
             simulated_day = {
@@ -183,7 +210,8 @@ def run_prediction(user_id):
             }
 
             rule_future = calculate_rule_risk(simulated_day)
-            next_risk = round(0.5 * next_lstm + 0.5 * rule_future, 2)
+
+            next_risk = round(0.3 * next_lstm + 0.7 * rule_future, 2)
 
             forecast.append(next_risk)
 
@@ -197,6 +225,7 @@ def run_prediction(user_id):
         }
 
     except Exception as e:
+        print("❌ PRED ERROR:", str(e))
         return {
             "risk_score": 0,
             "status": "Error",

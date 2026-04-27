@@ -1,11 +1,8 @@
 import jwt
-import os
 from flask import request
-from dotenv import load_dotenv
 
-load_dotenv()
-
-SECRET_KEY = os.getenv("SECRET_KEY")
+# 🔥 IMPORTANT: SAME KEY AS LOGIN
+SECRET_KEY = "neuropulse"
 
 
 def get_user_from_token():
@@ -15,16 +12,17 @@ def get_user_from_token():
         # =========================
         auth_header = request.headers.get("Authorization")
         print("AUTH HEADER:", auth_header)
+
         if not auth_header:
             print("❌ No Authorization header")
             return None
 
         # =========================
-        # 🔥 REMOVE "Bearer "
+        # 🔥 SPLIT TOKEN
         # =========================
         parts = auth_header.split(" ")
 
-        if len(parts) != 2:
+        if len(parts) != 2 or parts[0] != "Bearer":
             print("❌ Invalid token format")
             return None
 
@@ -35,7 +33,11 @@ def get_user_from_token():
         # =========================
         decoded = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
 
-        return decoded.get("user_id")
+        user_id = decoded.get("user_id")
+
+        print("✅ DECODED USER:", user_id)  # 🔥 DEBUG
+
+        return user_id
 
     except jwt.ExpiredSignatureError:
         print("❌ Token expired")
