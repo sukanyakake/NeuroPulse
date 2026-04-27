@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Menu, X } from "lucide-react";
 import analysis from "../assets/images/analysis.png"
 import prediction from "../assets/images/prediction.png"
 import dashboard from "../assets/images/dashboard.png"
@@ -13,36 +13,36 @@ const Home = () => {
       {/* =========================
           HERO SECTION
       ========================= */}
-      <section className="relative min-h-screen flex flex-col justify-center items-center px-6 text-center">
+      <section className="relative min-h-screen flex flex-col justify-center items-center px-6 text-center py-20">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px] rounded-full"></div>
         <div className="absolute bottom-[10%] right-[-5%] w-[40%] h-[40%] bg-cyan-600/10 blur-[120px] rounded-full"></div>
 
-        <div className="relative z-10">
+        <div className="relative z-10 w-full max-w-4xl">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
             <Sparkles size={14} className="text-cyan-400" />
-            <span className="text-xs uppercase tracking-widest text-slate-400">
+            <span className="text-[10px] md:text-xs uppercase tracking-widest text-slate-400">
               AI Mental Health Intelligence
             </span>
           </div>
 
-          <h1 className="text-7xl font-black text-white mb-6">
+          <h1 className="text-5xl md:text-7xl font-black text-white mb-6">
             NEURO<span className="text-cyan-400">PULSE</span>
           </h1>
 
-          <p className="text-slate-400 max-w-2xl mx-auto text-lg mb-10 leading-relaxed">
+          <p className="text-slate-400 max-w-2xl mx-auto text-base md:text-lg mb-10 leading-relaxed px-4">
             NeuroPulse is an AI-powered behavioral intelligence system that
             continuously analyzes your daily habits — including sleep patterns,
             screen usage, physical activity, and mood — to detect early signs of
             mental stress.
-            <br />
-            <br />
+            <br className="hidden md:block" />
+            <br className="hidden md:block" />
             Using advanced LSTM-based models, it predicts future mental risk
             trends and provides actionable insights before issues escalate.
           </p>
 
           <button
             onClick={() => navigate("/dashboard")}
-            className="px-10 py-4 bg-cyan-400 text-black font-bold rounded-xl hover:scale-105 transition"
+            className="px-8 md:px-10 py-4 bg-cyan-400 text-black font-bold rounded-xl hover:scale-105 transition w-full md:w-auto"
           >
             Open Dashboard →
           </button>
@@ -53,17 +53,17 @@ const Home = () => {
           ABOUT
       ========================= */}
       <section className="py-24 px-6 max-w-5xl mx-auto text-center">
-        <h2 className="text-4xl font-bold text-white mb-6">About NeuroPulse</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">About NeuroPulse</h2>
 
-        <p className="text-slate-400 leading-relaxed text-lg">
+        <p className="text-slate-400 leading-relaxed text-base md:text-lg">
           Mental health challenges often build silently through everyday habits
           such as poor sleep, excessive screen time, and low physical activity.
-          <br />
-          <br />
+          <br className="hidden md:block" />
+          <br className="hidden md:block" />
           NeuroPulse bridges the gap between raw behavioral data and meaningful
           insights by using AI to identify patterns over time.
-          <br />
-          <br />
+          <br className="hidden md:block" />
+          <br className="hidden md:block" />
           Instead of relying on manual inputs or surveys, it automatically
           tracks behavioral signals and explains *why* your mental state is
           changing — empowering you to take action early.
@@ -74,11 +74,11 @@ const Home = () => {
           FEATURES
       ========================= */}
       <section className="py-24 px-6 bg-white/[0.02]">
-        <h2 className="text-4xl text-white font-bold text-center mb-16">
+        <h2 className="text-3xl md:text-4xl text-white font-bold text-center mb-16">
           Core Features
         </h2>
 
-        <div className="grid md:grid-cols-4 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 max-w-7xl mx-auto">
           <Feature
             icon="📊"
             title="Risk Prediction"
@@ -109,9 +109,9 @@ const Home = () => {
           HOW IT WORKS
       ========================= */}
       <section className="py-24 px-6 text-center">
-        <h2 className="text-4xl font-bold text-white mb-12">How It Works</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-12">How It Works</h2>
 
-        <div className="grid md:grid-cols-3 gap-10 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 max-w-6xl mx-auto">
           <Step
             title="Collect Data"
             desc="Sleep, steps, screen time and mood are captured daily."
@@ -133,11 +133,11 @@ const Home = () => {
           GALLERY
       ========================= */}
       <section className="py-24 px-6 max-w-7xl mx-auto">
-        <h2 className="text-4xl text-white font-bold text-center mb-16">
+        <h2 className="text-3xl md:text-4xl text-white font-bold text-center mb-16">
           Product Preview
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <GalleryCard
             title="Dashboard"
             desc="View real-time metrics including risk score, sleep, and activity."
@@ -162,35 +162,35 @@ const Home = () => {
           CONTACT
       ========================= */}
       <section className="py-24 px-6 bg-white/[0.02] text-center">
-        <h2 className="text-4xl text-white font-bold mb-8">Contact Us</h2>
+        <h2 className="text-3xl md:text-4xl text-white font-bold mb-8">Contact Us</h2>
 
-        <p className="text-slate-400 mb-6 text-lg">
+        <p className="text-slate-400 mb-6 text-base md:text-lg">
           Interested in this project or want to collaborate?
           <br />
           Feel free to reach out.
         </p>
 
         <div className="text-slate-300 space-y-2">
-          <p>📧 neuropulse@gmail.com</p>
-          <p>📍 RGUKT, Andhra Pradesh</p>
+          <p className="flex items-center justify-center gap-2">📧 neuropulse@gmail.com</p>
+          <p className="flex items-center justify-center gap-2">📍 RGUKT, Andhra Pradesh</p>
         </div>
       </section>
 
       {/* =========================
           CTA
       ========================= */}
-      <section className="py-24 text-center">
-        <h2 className="text-3xl text-white font-bold mb-6">
+      <section className="py-24 px-6 text-center">
+        <h2 className="text-2xl md:text-3xl text-white font-bold mb-6">
           Take control of your mental wellbeing
         </h2>
 
-        <p className="text-slate-400 mb-8">
+        <p className="text-slate-400 mb-8 text-sm md:text-base">
           Start exploring your behavioral insights in real time.
         </p>
 
         <button
           onClick={() => navigate("/dashboard")}
-          className="px-10 py-4 bg-cyan-400 text-black font-bold rounded-xl hover:scale-105 transition"
+          className="px-8 md:px-10 py-4 bg-cyan-400 text-black font-bold rounded-xl hover:scale-105 transition w-full md:w-auto"
         >
           Go to Dashboard
         </button>
@@ -199,8 +199,8 @@ const Home = () => {
       {/* =========================
           FOOTER
       ========================= */}
-      <footer className="py-10 border-t border-white/5 text-center">
-        <p className="text-slate-500 text-sm">
+      <footer className="py-10 border-t border-white/5 text-center px-6">
+        <p className="text-slate-500 text-xs md:text-sm">
           © 2026 NeuroPulse • AI Mental Health System
         </p>
       </footer>
@@ -209,7 +209,7 @@ const Home = () => {
 };
 
 /* =========================
-   COMPONENTS
+    COMPONENTS
 ========================= */
 
 const Feature = ({ icon, title, desc }) => (
@@ -223,15 +223,15 @@ const Feature = ({ icon, title, desc }) => (
 const Step = ({ title, desc }) => (
   <div className="glass p-8 rounded-xl">
     <h3 className="text-white font-bold mb-2">{title}</h3>
-    <p className="text-slate-400">{desc}</p>
+    <p className="text-slate-400 text-sm md:text-base">{desc}</p>
   </div>
 );
 
-const GalleryCard = ({ title, desc,img }) => (
-  <div className="glass p-8 rounded-xl text-center hover:scale-105 transition">
-    <img src={img} />
-    <p className="text-white font-bold mb-2">{title}</p>
-    <p className="text-slate-400 text-sm">{desc}</p>
+const GalleryCard = ({ title, desc, img }) => (
+  <div className="glass p-6 md:p-8 rounded-xl text-center hover:scale-105 transition overflow-hidden">
+    <img src={img} alt={title} className="w-full h-auto rounded-lg mb-4 object-cover" />
+    <p className="text-white font-bold mb-2 uppercase text-xs tracking-widest">{title}</p>
+    <p className="text-slate-400 text-xs md:text-sm">{desc}</p>
   </div>
 );
 

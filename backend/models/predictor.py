@@ -175,7 +175,7 @@ def run_prediction(user_id):
         rule_risk = calculate_rule_risk(latest_day)
 
         # ✅ FIX: BETTER WEIGHTING
-        risk =rule_risk
+        risk =round(0.3*lstm_risk+0.7*rule_risk,2)
 
         # 🔍 DEBUG
         print("USER:", user_id)
